@@ -1,0 +1,46 @@
+name,category,address,latitude,longitude
+Fakultni nemocnice Ostrava,hospital,17. listopadu 1790/5,49.8312,18.1607
+Mestska nemocnice Ostrava,hospital,Nemocnicni 898/20A,49.8357,18.2928
+Poliklinika Hrabuvka,hospital,Dr. Martinka 1492/7,49.7819,18.2509
+Zdravotni stredisko Poruba,hospital,Opavska 6121/6A,49.8265,18.1594
+Lecebne centrum Vitkovice,hospital,Zaluzi 1,49.8058,18.2743
+ZS Gen. Piky,school,Gen. Piky 13A,49.8365,18.2822
+ZS Porubska,school,Porubska 832,49.8217,18.1585
+ZS Hrabuvka,school,Krestanova 36A,49.7798,18.2548
+Gymnazium Olgy Havlove,school,M. Majerove 1691,49.8043,18.2656
+ZS Marianske Hory,school,Gen. Janka 1208,49.8319,18.2438
+Restaurace Stodolni Dvur,restaurant,Stodolni 8,49.8352,18.2921
+Restaurace U Radnice,restaurant,Prokesovo namesti 8,49.8347,18.2916
+Pizzeria Poruba,restaurant,Hlavni trida 583/102,49.8251,18.1716
+Bistro Nova Karolina,restaurant,Jantarova 3344/4,49.8276,18.2828
+Restaurace Hrabina,restaurant,Dr. Martinka 15,49.7809,18.2524
+Tramvajova zastavka Karolina,bus_stop,Jantarova,49.8284,18.2822
+Autobusova zastavka Hlavni trida,bus_stop,Hlavni trida,49.8264,18.1686
+Zastavka Namesti SNP,bus_stop,Namesti SNP,49.7814,18.2555
+Zastavka Nova Ves Vodarna,bus_stop,Opavska,49.8448,18.2102
+Zastavka Elektra,bus_stop,Nadrazni,49.8363,18.2894
+Lekarna Karolina,pharmacy,Jantarova 3344/4,49.8278,18.2831
+Lekarna Poruba,pharmacy,Hlavni trida 702/85,49.8242,18.1693
+Lekarna Hrabuvka,pharmacy,Dr. Martinka 18,49.7816,18.2527
+Lekarna Marianske Hory,pharmacy,28. rijna 2663/150,49.8328,18.2467
+Lekarna Futurum,pharmacy,Novinarska 3178/6A,49.8068,18.2591
+Komenskeho sady,park,Komenskeho sady,49.8407,18.2927
+Belsky les,park,Belsky les,49.7708,18.2557
+Sad Milady Horakove,park,Husuv sad,49.8325,18.2821
+Porubsky park,park,Alseho namesti,49.8258,18.1638
+Landek park,park,Pod Landekem,49.8673,18.2701
+Ostravska univerzita Filozoficka fakulta,university,Rezni 5,49.8342,18.2929
+VSB TU Ostrava,university,17. listopadu 2172/15,49.8333,18.1600
+Lekarska fakulta OU,university,Syllabova 19,49.8316,18.1623
+Ekonomicka fakulta VSB,university,Sokolovska trida 33,49.8348,18.1582
+PrF OU,university,Dvorakova 7,49.8353,18.2890
+Parkoviste Karolina,parking,Jantarova 3344/4,49.8280,18.2842
+Parkoviste Poruba,parking,Hlavni trida,49.8238,18.1708
+Parkoviste Hlavni nadrazi,parking,Nadrazni 196,49.8499,18.2835
+Parkoviste Dolni oblast,parking,Ruska 2993,49.8135,18.2735
+Parkoviste Avion,parking,Rudna 114/3114,49.7875,18.2364
+Restaurace Bolt Tower,restaurant,Ruska 2993,49.8139,18.2728
+ZS Ostrcilova,school,Ostrcilova 10,49.8409,18.2891
+Lekarna Fifejdy,pharmacy,Lechowiczova 8,49.8421,18.2708
+Mestsky stadion parking,parking,Zavodni 2891/86,49.8017,18.2477
+Park Dukla,park,Dukelska,49.8368,18.2715
