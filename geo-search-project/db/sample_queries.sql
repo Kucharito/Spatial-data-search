@@ -67,10 +67,201 @@ WHERE ST_DWithin(
     1000
 );
 
--- 6. Vytvorenie priestoroveho indexu
+
+-- 7. Vytvorenie priestoroveho GiST indexu
 CREATE INDEX IF NOT EXISTS idx_places_geom_gist
     ON places
     USING GIST (geom);
 
--- 7. Zmazanie priestoroveho indexu
+-- 8. Zmazanie priestoroveho indexu pre porovnanie vykonu bez indexu
 DROP INDEX IF EXISTS idx_places_geom_gist;
+
+
+
+
+/*
+cd "C:\Users\adamk\OneDrive\Počítač\Databazy Projekt\geo-search-project"
+docker exec -it geo-search-db psql -U postgres -d geodb
+
+DROP INDEX IF EXISTS idx_places_geom_gist;
+ANALYZE places;
+
+\timing on
+
+BEGIN;
+
+CREATE INDEX IF NOT EXISTS idx_places_geom_gist ON places USING GIST (geom);
+ANALYZE places;
+
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT *
+FROM places
+WHERE ST_DWithin(
+  geom,
+  ST_SetSRID(ST_MakePoint(17.1077, 48.1486), 4326),
+  0.01
+);
+
+ROLLBACK;
+
+
+test s indexom
+
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT *
+FROM places
+WHERE ST_DWithin(
+  geom,
+  ST_SetSRID(ST_MakePoint(17.1077, 48.1486), 4326),
+  0.01
+);
+
+*/
+
+
+
+/*
+\timing on
+ANALYZE places;
+
+-- 1) S INDEXOM
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT id, name
+FROM places
+WHERE ST_DWithin(
+  geom,
+  ST_SetSRID(ST_MakePoint(18.2625, 49.8209), 4326)::geography,
+  1000
+);
+
+-- 2) DROP INDEX
+DROP INDEX IF EXISTS idx_places_geom_gist;
+ANALYZE places;
+
+-- 3) BEZ INDEXU
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT id, name
+FROM places
+WHERE ST_DWithin(
+  geom,
+  ST_SetSRID(ST_MakePoint(18.2625, 49.8209), 4326)::geography,
+  1000
+);
+
+-- 4) VYTVOR INDEX NASPAT
+CREATE INDEX IF NOT EXISTS idx_places_geom_gist ON places USING GIST (geom);
+ANALYZE places;
+
+
+
+*/
+
+/*
+-- TEST 3: NEAREST (ORDER BY ST_Distance) s/bez indexu
+	iming on
+ANALYZE places;
+
+-- 1) S INDEXOM
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT id, name
+FROM places
+ORDER BY ST_Distance(
+    geom,
+    ST_SetSRID(ST_MakePoint(18.2625, 49.8209), 4326)::geography
+)
+LIMIT 10;
+
+-- 2) DROP INDEX
+DROP INDEX IF EXISTS idx_places_geom_gist;
+ANALYZE places;
+
+-- 3) BEZ INDEXU
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT id, name
+FROM places
+ORDER BY ST_Distance(
+    geom,
+    ST_SetSRID(ST_MakePoint(18.2625, 49.8209), 4326)::geography
+)
+LIMIT 10;
+
+-- 4) VYTVOR INDEX NASPAT
+CREATE INDEX IF NOT EXISTS idx_places_geom_gist ON places USING GIST (geom);
+ANALYZE places;
+*/
+
+/*
+-- TEST 4: RADIUS + CATEGORY FILTER (kombinacia GiST a B-tree)
+	iming on
+ANALYZE places;
+
+-- 1) S INDEXAMI
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT id, name
+FROM places
+WHERE ST_DWithin(
+    geom,
+    ST_SetSRID(ST_MakePoint(18.2625, 49.8209), 4326)::geography,
+    1500
+)
+AND category = 'restaurant';
+
+-- 2) DROP INDEXY
+DROP INDEX IF EXISTS idx_places_geom_gist;
+DROP INDEX IF EXISTS idx_places_category;
+ANALYZE places;
+
+-- 3) BEZ INDEXOV
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT id, name
+FROM places
+WHERE ST_DWithin(
+    geom,
+    ST_SetSRID(ST_MakePoint(18.2625, 49.8209), 4326)::geography,
+    1500
+)
+AND category = 'restaurant';
+
+-- 4) VYTVOR INDEXY NASPAT
+CREATE INDEX IF NOT EXISTS idx_places_geom_gist ON places USING GIST (geom);
+CREATE INDEX IF NOT EXISTS idx_places_category ON places (category);
+ANALYZE places;
+*/
+
+/*
+-- TEST 5: POLYGON (ST_Intersects) s/bez GiST
+	iming on
+ANALYZE places;
+
+-- 1) S INDEXOM
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT id, name
+FROM places
+WHERE ST_Intersects(
+    geom::geometry,
+    ST_GeomFromText(
+        'POLYGON((18.2390 49.8360,18.2860 49.8360,18.2860 49.8070,18.2390 49.8070,18.2390 49.8360))',
+        4326
+    )
+);
+
+-- 2) DROP INDEX
+DROP INDEX IF EXISTS idx_places_geom_gist;
+ANALYZE places;
+
+-- 3) BEZ INDEXU
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT id, name
+FROM places
+WHERE ST_Intersects(
+    geom::geometry,
+    ST_GeomFromText(
+        'POLYGON((18.2390 49.8360,18.2860 49.8360,18.2860 49.8070,18.2390 49.8070,18.2390 49.8360))',
+        4326
+    )
+);
+
+-- 4) VYTVOR INDEX NASPAT
+CREATE INDEX IF NOT EXISTS idx_places_geom_gist ON places USING GIST (geom);
+ANALYZE places;
+*/

@@ -181,8 +181,8 @@ def nearest_benchmark_payload(lat: float, lon: float, k: int, category: Optional
         LIMIT %(k)s
     """
     note = (
-        "Pri zapnutom GiST indexe na stlpci geom PostGIS zvycajne vie najst kandidaty rychlejsie; "
-        "bez indexu databaza prechadza viac riadkov."
+        "V PostgreSQL sa pri priestorovych datach bezne pouziva GiST index, ktory sa sprava ako R-tree-like "
+        "struktura. Porovnanie v tomto projekte preto znamena GiST index verzus stav bez priestoroveho indexu."
     )
     return query, {"lat": lat, "lon": lon, "k": k, "category": category}, note
 
@@ -199,8 +199,9 @@ def radius_benchmark_payload(lat: float, lon: float, radius_m: float, category: 
         AND (%(category)s::text IS NULL OR category = %(category)s::text)
     """
     note = (
-        "ST_DWithin je typicky operacia, pri ktorej sa priestorovy index prejavi najviac. "
-        "Po odstraneni indexu bude plan castejsie smerovat k sekvencnemu scanu."
+        "ST_DWithin je typicka operacia, pri ktorej sa GiST index prejavi najviac. V PostgreSQL ide o "
+        "R-tree-like sposob indexovania priestorovych objektov; po odstraneni indexu bude plan castejsie "
+        "smerovat k sekvencnemu scanu."
     )
     return query, {"lat": lat, "lon": lon, "radius_m": radius_m, "category": category}, note
 

@@ -12,6 +12,7 @@ Projekt priamo pracuje s geografickymi objektmi reprezentovanymi ako body. V dat
 - import geografickych dat z CSV,
 - priestorove dotazy `ST_DWithin`, `ST_Distance`, `ST_Intersects`,
 - porovnanie vykonu dotazov s indexom a bez indexu,
+- vysvetlenie vztahu medzi GiST indexom a R-tree principom v PostgreSQL,
 - jednoduche API a mapove rozhranie na prezentaciu vysledkov.
 
 ## 3. Pouzite technologie
@@ -234,6 +235,20 @@ CREATE INDEX idx_places_geom_gist ON places USING GIST (geom);
 
 Tento index urychluje vyhladavanie kandidatov pri priestorovych dotazoch.
 
+### GiST a R-tree v PostgreSQL
+Pri prezentacii je dobre rozlisit dva pojmy:
+
+- `R-tree` je koncept alebo typ stromovej priestorovej indexacnej struktury,
+- `GiST` v PostgreSQL je vseobecna indexova metoda, cez ktoru PostGIS realizuje priestorove indexovanie.
+
+Pre prakticke ucely to znamena, ze v PostgreSQL sa pri PostGIS bezne nevytvara samostatny index s nazvom `R-tree`.
+Namiesto toho sa vytvori `GiST` index, ktory sa pri priestorovych objektoch sprava ako `R-tree-like` struktura.
+
+Preto je korektne porovnanie v tomto projekte:
+
+- dotaz s GiST priestorovym indexom,
+- ten isty dotaz bez priestoroveho indexu.
+
 ## 11. Benchmark a porovnanie s/bez indexu
 Projekt obsahuje:
 
@@ -242,6 +257,12 @@ Projekt obsahuje:
 - endpointy `GET /benchmark/nearest` a `GET /benchmark/radius`
 - endpoint `GET /explain/radius` pre plan vykonania
 
+Toto benchmarkovanie mozes v texte prace opisat aj ako:
+
+- porovnanie vykonu priestoroveho vyhladavania s GiST indexom,
+- porovnanie vykonu bez priestoroveho indexu,
+- diskusia, ze GiST v PostgreSQL predstavuje prakticku implementaciu R-tree-like indexovania pre PostGIS.
+
 Odporucany postup testovania:
 
 1. Importujte data a spustite benchmark s indexom.
@@ -249,6 +270,13 @@ Odporucany postup testovania:
 3. Znova spustite benchmark.
 4. Porovnajte `execution_time_ms` a vystup `EXPLAIN ANALYZE`.
 5. Nakoniec obnovte indexy pomocou `db/indexes.sql`.
+
+Pri vyhodnoteni si vsimaj hlavne:
+
+- ci planner pouzil index scan alebo bitmap/index-assisted scan,
+- ci po odstraneni indexu presiel na sekvencny scan,
+- rozdiel v `Execution Time`,
+- rozdiel v pocte spracovanych riadkov a bufferov v `EXPLAIN ANALYZE`.
 
 ## 12. Demo dataset
 Subor `data/places.csv` obsahuje pripraveny testovaci dataset s viac ako 40 zaznamami v okoli Ostravy. Ide o lokalny demo dataset vhodny na prezentaciu a testovanie bez internetoveho pripojenia.
@@ -274,8 +302,10 @@ Subor `db/sample_queries.sql` obsahuje:
 3. objekty v okruhu 1000 m,
 4. objekty v polygone,
 5. `EXPLAIN ANALYZE` pre radius query,
-6. vytvorenie indexu,
-7. zmazanie indexu.
+6. poznamku k GiST a R-tree-like indexovaniu,
+7. vytvorenie indexu,
+8. zmazanie indexu,
+9. odporucany benchmark postup.
 
 ## 14. Miesto pre screenshoty
 Do odovzdania mozete doplnit:
