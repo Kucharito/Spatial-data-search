@@ -9,6 +9,7 @@ load_dotenv()
 
 
 def get_database_url() -> str:
+    # Read database connection URL from environment.
     database_url = os.getenv("DATABASE_URL")
     if not database_url:
         raise RuntimeError("Environment variable DATABASE_URL is not set.")
@@ -17,6 +18,7 @@ def get_database_url() -> str:
 
 @contextmanager
 def get_connection():
+    # Yield a PostgreSQL connection with dict-style rows.
     connection = connect(get_database_url(), row_factory=dict_row)
     try:
         yield connection

@@ -158,7 +158,7 @@ ANALYZE places;
 
 /*
 -- TEST 3: NEAREST (ORDER BY ST_Distance) s/bez indexu
-	iming on
+\timing on
 ANALYZE places;
 
 -- 1) S INDEXOM
@@ -192,7 +192,7 @@ ANALYZE places;
 
 /*
 -- TEST 4: RADIUS + CATEGORY FILTER (kombinacia GiST a B-tree)
-	iming on
+\timing on
 ANALYZE places;
 
 -- 1) S INDEXAMI
@@ -225,43 +225,5 @@ AND category = 'restaurant';
 -- 4) VYTVOR INDEXY NASPAT
 CREATE INDEX IF NOT EXISTS idx_places_geom_gist ON places USING GIST (geom);
 CREATE INDEX IF NOT EXISTS idx_places_category ON places (category);
-ANALYZE places;
-*/
-
-/*
--- TEST 5: POLYGON (ST_Intersects) s/bez GiST
-	iming on
-ANALYZE places;
-
--- 1) S INDEXOM
-EXPLAIN (ANALYZE, BUFFERS)
-SELECT id, name
-FROM places
-WHERE ST_Intersects(
-    geom::geometry,
-    ST_GeomFromText(
-        'POLYGON((18.2390 49.8360,18.2860 49.8360,18.2860 49.8070,18.2390 49.8070,18.2390 49.8360))',
-        4326
-    )
-);
-
--- 2) DROP INDEX
-DROP INDEX IF EXISTS idx_places_geom_gist;
-ANALYZE places;
-
--- 3) BEZ INDEXU
-EXPLAIN (ANALYZE, BUFFERS)
-SELECT id, name
-FROM places
-WHERE ST_Intersects(
-    geom::geometry,
-    ST_GeomFromText(
-        'POLYGON((18.2390 49.8360,18.2860 49.8360,18.2860 49.8070,18.2390 49.8070,18.2390 49.8360))',
-        4326
-    )
-);
-
--- 4) VYTVOR INDEX NASPAT
-CREATE INDEX IF NOT EXISTS idx_places_geom_gist ON places USING GIST (geom);
 ANALYZE places;
 */

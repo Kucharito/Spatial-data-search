@@ -31,7 +31,7 @@ Projekt ma tri hlavne casti:
 1. Databaza v Dockeri
    Obsahuje PostgreSQL + PostGIS, tabulku `places` a SQL skripty na inicializaciu a pracu s indexami.
 2. Backend vo FastAPI
-   Poskytuje API endpointy pre import dat, hladanie najblizsich objektov, radius search, polygon search a benchmark.
+   Poskytuje API endpointy pre import dat, hladanie najblizsich objektov, radius search a polygon search.
 3. Frontend v HTML/JS
    Zobrazuje mapu Ostravy, umoznuje kliknut bod na mape a volat API dotazy.
 
@@ -188,8 +188,6 @@ Typ `GEOGRAPHY(Point, 4326)` je pouzity preto, aby funkcie vzdialenosti vracali 
 - `GET /places/nearest` najblizsie objekty k zadanemu bodu
 - `GET /places/radius` objekty v zadanej vzdialenosti
 - `POST /places/in-polygon` objekty vo vnutri polygonu
-- `GET /benchmark/nearest` cas vykonania nearest query
-- `GET /benchmark/radius` cas vykonania radius query
 - `GET /explain/radius` plan dotazu `EXPLAIN ANALYZE`
 
 ## 10. Vysvetlenie priestorovych dotazov
@@ -249,15 +247,15 @@ Preto je korektne porovnanie v tomto projekte:
 - dotaz s GiST priestorovym indexom,
 - ten isty dotaz bez priestoroveho indexu.
 
-## 11. Benchmark a porovnanie s/bez indexu
+## 11. Testovanie vykonu s/bez indexu
 Projekt obsahuje:
 
 - `db/indexes.sql` na vytvorenie indexov
 - `db/drop_indexes.sql` na odstranenie indexov
-- endpointy `GET /benchmark/nearest` a `GET /benchmark/radius`
+- `db/sample_queries.sql` s ukazkovymi `EXPLAIN (ANALYZE)` dotazmi
 - endpoint `GET /explain/radius` pre plan vykonania
 
-Toto benchmarkovanie mozes v texte prace opisat aj ako:
+Toto porovnanie mozes v texte prace opisat aj ako:
 
 - porovnanie vykonu priestoroveho vyhladavania s GiST indexom,
 - porovnanie vykonu bez priestoroveho indexu,
@@ -265,10 +263,10 @@ Toto benchmarkovanie mozes v texte prace opisat aj ako:
 
 Odporucany postup testovania:
 
-1. Importujte data a spustite benchmark s indexom.
+1. Importujte data a spustite `EXPLAIN (ANALYZE)` s indexom.
 2. Spustite `db/drop_indexes.sql`.
-3. Znova spustite benchmark.
-4. Porovnajte `execution_time_ms` a vystup `EXPLAIN ANALYZE`.
+3. Znova spustite ten isty `EXPLAIN (ANALYZE)` dotaz.
+4. Porovnajte `Execution Time` a vystup `EXPLAIN ANALYZE`.
 5. Nakoniec obnovte indexy pomocou `db/indexes.sql`.
 
 Pri vyhodnoteni si vsimaj hlavne:
@@ -305,14 +303,14 @@ Subor `db/sample_queries.sql` obsahuje:
 6. poznamku k GiST a R-tree-like indexovaniu,
 7. vytvorenie indexu,
 8. zmazanie indexu,
-9. odporucany benchmark postup.
+9. odporucany postup porovnania vykonu.
 
 ## 14. Miesto pre screenshoty
 Do odovzdania mozete doplnit:
 
 - screenshot Swagger UI,
 - screenshot frontend mapy,
-- screenshot vysledkov benchmarku,
+- screenshot vysledkov `EXPLAIN ANALYZE`,
 - screenshot `EXPLAIN ANALYZE`.
 
 ## 15. Mozne buduce rozsirenia

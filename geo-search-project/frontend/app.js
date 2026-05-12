@@ -20,6 +20,7 @@ let radiusCircle = null;
 let currentPoint = null;
 
 function formatDistance(place) {
+  // Format distance for display in the results table.
   if (place.distance_m === undefined || place.distance_m === null) {
     return "-";
   }
@@ -27,6 +28,7 @@ function formatDistance(place) {
 }
 
 function renderTable(places) {
+  // Render the results table for the current place list.
   resultsBody.innerHTML = "";
   resultsInfo.textContent = `${places.length} rows`;
 
@@ -51,6 +53,7 @@ function renderTable(places) {
 }
 
 function clearResultsLayers() {
+  // Remove current markers and radius circle from the map.
   markersLayer.clearLayers();
   if (radiusCircle) {
     map.removeLayer(radiusCircle);
@@ -59,6 +62,7 @@ function clearResultsLayers() {
 }
 
 function drawPlaces(places) {
+  // Draw place markers and popups for a new result set.
   clearResultsLayers();
 
   for (const place of places) {
@@ -74,6 +78,7 @@ function drawPlaces(places) {
 }
 
 function setSelectedPoint(lat, lon) {
+  // Store the selected point and display its marker.
   currentPoint = { lat, lon };
   selectedCoords.textContent = `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
 
@@ -86,6 +91,7 @@ function setSelectedPoint(lat, lon) {
 }
 
 async function apiGet(path) {
+  // Perform a GET request to the backend API.
   const response = await fetch(`${API_BASE_URL}${path}`);
   if (!response.ok) {
     const errorText = await response.text();
@@ -95,6 +101,7 @@ async function apiGet(path) {
 }
 
 async function apiPost(path, payload) {
+  // Perform a POST request to the backend API.
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method: "POST",
     headers: {
@@ -112,16 +119,19 @@ async function apiPost(path, payload) {
 }
 
 function getCategoryQuery() {
+  // Build the optional category filter query string.
   return categorySelect.value ? `&category=${encodeURIComponent(categorySelect.value)}` : "";
 }
 
 function requireSelectedPoint() {
+  // Guard against queries without a selected map point.
   if (!currentPoint) {
     throw new Error("Select a point on the map first.");
   }
 }
 
 async function loadCategories() {
+  // Fetch categories and populate the dropdown.
   const data = await apiGet("/categories");
   for (const category of data.categories) {
     const option = document.createElement("option");
@@ -132,6 +142,7 @@ async function loadCategories() {
 }
 
 async function loadAllPlaces() {
+  // Load and display all places (optionally filtered).
   const query = categorySelect.value ? `?category=${encodeURIComponent(categorySelect.value)}` : "";
   const places = await apiGet(`/places${query}`);
   drawPlaces(places);
@@ -139,6 +150,7 @@ async function loadAllPlaces() {
 }
 
 async function findNearestPlaces() {
+  // Run nearest search for the selected point.
   requireSelectedPoint();
   const k = Number(kInput.value) || 5;
   const query = `/places/nearest?lat=${currentPoint.lat}&lon=${currentPoint.lon}&k=${k}${getCategoryQuery()}`;
@@ -148,6 +160,7 @@ async function findNearestPlaces() {
 }
 
 async function findWithinRadius() {
+  // Run radius search for the selected point and draw the circle.
   requireSelectedPoint();
   const radius = Number(radiusInput.value) || 1000;
   const query = `/places/radius?lat=${currentPoint.lat}&lon=${currentPoint.lon}&radius_m=${radius}${getCategoryQuery()}`;
@@ -164,6 +177,7 @@ async function findWithinRadius() {
 }
 
 async function demoPolygonSearch() {
+  // Run a demo polygon search with a fixed rectangle.
   const payload = {
     coordinates: [
       [18.2390, 49.8360],
@@ -192,11 +206,13 @@ async function demoPolygonSearch() {
 }
 
 function clearMap() {
+  // Clear results from map and table.
   clearResultsLayers();
   renderTable([]);
 }
 
 async function checkBackend() {
+  // Ping the backend and update the status label.
   try {
     const data = await apiGet("/health");
     backendStatus.textContent = data.status;
@@ -207,9 +223,11 @@ async function checkBackend() {
 }
 
 map.on("click", (event) => {
+  // Update selected point on map click.
   setSelectedPoint(event.latlng.lat, event.latlng.lng);
 });
 
+// Load all places on button click.
 document.getElementById("load-all-btn").addEventListener("click", async () => {
   try {
     await loadAllPlaces();
@@ -218,6 +236,7 @@ document.getElementById("load-all-btn").addEventListener("click", async () => {
   }
 });
 
+// Run nearest search on button click.
 document.getElementById("nearest-btn").addEventListener("click", async () => {
   try {
     await findNearestPlaces();
@@ -226,6 +245,7 @@ document.getElementById("nearest-btn").addEventListener("click", async () => {
   }
 });
 
+// Run radius search on button click.
 document.getElementById("radius-btn").addEventListener("click", async () => {
   try {
     await findWithinRadius();
@@ -234,6 +254,7 @@ document.getElementById("radius-btn").addEventListener("click", async () => {
   }
 });
 
+// Run polygon demo search on button click.
 document.getElementById("polygon-btn").addEventListener("click", async () => {
   try {
     await demoPolygonSearch();
@@ -242,10 +263,12 @@ document.getElementById("polygon-btn").addEventListener("click", async () => {
   }
 });
 
+// Clear map and results on button click.
 document.getElementById("clear-btn").addEventListener("click", () => {
   clearMap();
 });
 
+// Initialize empty table and load initial data.
 renderTable([]);
 checkBackend();
 loadCategories().catch((error) => console.error(error));

@@ -8,6 +8,7 @@ DEFAULT_CSV_PATH = PROJECT_ROOT / "data" / "places.csv"
 
 
 def import_places(connection, csv_path: Path = DEFAULT_CSV_PATH, clear: bool = True) -> Tuple[int, Path]:
+    # Load places from CSV and insert them into the database (optionally clearing old rows).
     if not csv_path.exists():
         raise FileNotFoundError(f"CSV file not found: {csv_path}")
 

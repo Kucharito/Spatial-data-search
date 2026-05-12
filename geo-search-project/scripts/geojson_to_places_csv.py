@@ -7,6 +7,7 @@ OUTPUT_FILE = Path("../data/places.csv")
 
 
 def category_from_properties(props: dict) -> str | None:
+    # Map OSM properties to a small set of demo categories.
     if props.get("amenity") in {
         "hospital",
         "school",
@@ -27,6 +28,7 @@ def category_from_properties(props: dict) -> str | None:
 
 
 def get_point_from_geometry(geometry: dict):
+    # Extract a representative lon/lat point from the GeoJSON geometry.
     """
     Returns longitude, latitude.
     For Point: returns the point.
@@ -45,6 +47,7 @@ def get_point_from_geometry(geometry: dict):
 
     points = []
 
+    # Recursively collect coordinate pairs from nested geometry arrays.
     def collect(c):
         if isinstance(c, list) and len(c) >= 2 and isinstance(c[0], (int, float)) and isinstance(c[1], (int, float)):
             points.append(c)
@@ -63,6 +66,7 @@ def get_point_from_geometry(geometry: dict):
 
 
 def build_address(props: dict) -> str:
+    # Build a human-readable address from OSM-style fields.
     street = props.get("addr:street", "")
     house_number = props.get("addr:housenumber", "")
     city = props.get("addr:city", "Ostrava")
@@ -82,6 +86,7 @@ def build_address(props: dict) -> str:
 
 
 def main():
+    # Convert the input GeoJSON into a CSV dataset for import.
     with INPUT_FILE.open("r", encoding="utf-8") as f:
         data = json.load(f)
 

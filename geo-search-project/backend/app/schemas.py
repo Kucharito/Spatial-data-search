@@ -45,13 +45,6 @@ class NearbyPlaceResponse(PlaceBase):
     distance_m: float
 
 
-class BenchmarkResponse(BaseModel):
-    result_count: int
-    execution_time_ms: float
-    query_type: str
-    note: str
-
-
 class ExplainResponse(BaseModel):
     query_type: str
     plan: List[str]

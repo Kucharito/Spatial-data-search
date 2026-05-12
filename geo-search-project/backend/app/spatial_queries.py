@@ -1,13 +1,15 @@
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from psycopg.sql import SQL
 
 
 def _round_distance(value: Any) -> float:
+    # Normalize distance values to two decimal places.
     return round(float(value), 2)
 
 
 def fetch_places(connection, category: Optional[str] = None) -> List[Dict[str, Any]]:
+    # Load all places, optionally filtered by category.
     query = """
         SELECT id, name, category, address, latitude, longitude
         FROM places
@@ -20,6 +22,7 @@ def fetch_places(connection, category: Optional[str] = None) -> List[Dict[str, A
 
 
 def fetch_categories(connection) -> List[str]:
+    # Fetch distinct place categories for UI filters.
     query = """
         SELECT DISTINCT category
         FROM places
@@ -31,21 +34,10 @@ def fetch_categories(connection) -> List[str]:
     return [row["category"] for row in rows]
 
 
-def nearest_places(
-    connection,
-    lat: float,
-    lon: float,
-    k: int = 5,
-    category: Optional[str] = None,
-) -> List[Dict[str, Any]]:
+def nearest_places(connection, lat: float, lon: float, k: int = 5, category: Optional[str] = None,) -> List[Dict[str, Any]]:
+    # Return k nearest places to the given point using ST_Distance.
     query = """
-        SELECT
-            id,
-            name,
-            category,
-            address,
-            latitude,
-            longitude,
+        SELECT id, name, category, address, latitude, longitude,
             ROUND(
                 CAST(
                     ST_Distance(
@@ -80,14 +72,9 @@ def radius_places(
     radius_m: float,
     category: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
+    # Return places within radius_m meters using ST_DWithin.
     query = """
-        SELECT
-            id,
-            name,
-            category,
-            address,
-            latitude,
-            longitude,
+        SELECT id, name, category, address, latitude, longitude,
             ROUND(
                 CAST(
                     ST_Distance(
@@ -121,6 +108,7 @@ def polygon_places(
     coordinates: List[List[float]],
     category: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
+    # Return places intersecting the input polygon (WKT built from coordinates).
     closed_coordinates = list(coordinates)
     if closed_coordinates[0] != closed_coordinates[-1]:
         closed_coordinates.append(closed_coordinates[0])
@@ -143,51 +131,8 @@ def polygon_places(
         return cursor.fetchall()
 
 
-def benchmark_query(connection, query: str, params: Dict[str, Any], query_type: str, note: str) -> Dict[str, Any]:
-    explain_query = f"EXPLAIN (ANALYZE, FORMAT TEXT) {query}"
-    with connection.cursor() as cursor:
-        cursor.execute(explain_query, params)
-        plan_rows = cursor.fetchall()
-
-    execution_time_ms = 0.0
-    for row in plan_rows:
-        line = row["QUERY PLAN"]
-        if line.startswith("Execution Time:"):
-            execution_time_ms = float(line.split(":")[1].strip().split()[0])
-            break
-
-    count_query = f"SELECT COUNT(*) AS result_count FROM ({query}) AS subquery"
-    with connection.cursor() as cursor:
-        cursor.execute(count_query, params)
-        result_count = cursor.fetchone()["result_count"]
-
-    return {
-        "result_count": result_count,
-        "execution_time_ms": round(execution_time_ms, 3),
-        "query_type": query_type,
-        "note": note,
-    }
-
-
-def nearest_benchmark_payload(lat: float, lon: float, k: int, category: Optional[str]) -> Tuple[str, Dict[str, Any], str]:
-    query = """
-        SELECT id
-        FROM places
-        WHERE (%(category)s::text IS NULL OR category = %(category)s::text)
-        ORDER BY ST_Distance(
-            geom,
-            ST_SetSRID(ST_MakePoint(%(lon)s, %(lat)s), 4326)::geography
-        )
-        LIMIT %(k)s
-    """
-    note = (
-        "V PostgreSQL sa pri priestorovych datach bezne pouziva GiST index, ktory sa sprava ako R-tree-like "
-        "struktura. Porovnanie v tomto projekte preto znamena GiST index verzus stav bez priestoroveho indexu."
-    )
-    return query, {"lat": lat, "lon": lon, "k": k, "category": category}, note
-
-
-def radius_benchmark_payload(lat: float, lon: float, radius_m: float, category: Optional[str]) -> Tuple[str, Dict[str, Any], str]:
+def explain_radius(connection, lat: float, lon: float, radius_m: float, category: Optional[str]) -> List[str]:
+    # Execute EXPLAIN ANALYZE for the radius query and return the plan lines.
     query = """
         SELECT id
         FROM places
@@ -198,16 +143,7 @@ def radius_benchmark_payload(lat: float, lon: float, radius_m: float, category: 
         )
         AND (%(category)s::text IS NULL OR category = %(category)s::text)
     """
-    note = (
-        "ST_DWithin je typicka operacia, pri ktorej sa GiST index prejavi najviac. V PostgreSQL ide o "
-        "R-tree-like sposob indexovania priestorovych objektov; po odstraneni indexu bude plan castejsie "
-        "smerovat k sekvencnemu scanu."
-    )
-    return query, {"lat": lat, "lon": lon, "radius_m": radius_m, "category": category}, note
-
-
-def explain_radius(connection, lat: float, lon: float, radius_m: float, category: Optional[str]) -> List[str]:
-    query, params, _ = radius_benchmark_payload(lat, lon, radius_m, category)
+    params = {"lat": lat, "lon": lon, "radius_m": radius_m, "category": category}
     explain_query = SQL("EXPLAIN (ANALYZE, BUFFERS, FORMAT TEXT) {}").format(SQL(query))
     with connection.cursor() as cursor:
         cursor.execute(explain_query, params)

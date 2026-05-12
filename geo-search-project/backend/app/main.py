@@ -6,7 +6,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from .database import get_connection
 from .importer import import_places
 from .schemas import (
-    BenchmarkResponse,
     CategoryListResponse,
     ExplainResponse,
     HealthResponse,
@@ -17,14 +16,11 @@ from .schemas import (
     ProjectInfoResponse,
 )
 from .spatial_queries import (
-    benchmark_query,
     explain_radius,
     fetch_categories,
     fetch_places,
-    nearest_benchmark_payload,
     nearest_places,
     polygon_places,
-    radius_benchmark_payload,
     radius_places,
 )
 
@@ -44,6 +40,7 @@ app.add_middleware(
 
 
 @app.get("/", response_model=ProjectInfoResponse)
+# Return basic project metadata for the landing endpoint.
 def root() -> ProjectInfoResponse:
     return ProjectInfoResponse(
         project="Geo Search Project – Spatial Database Object Finder",
@@ -61,6 +58,7 @@ def root() -> ProjectInfoResponse:
 
 
 @app.get("/health", response_model=HealthResponse)
+# Check database connectivity and return PostGIS version info.
 def health_check() -> HealthResponse:
     try:
         with get_connection() as connection, connection.cursor() as cursor:
@@ -72,6 +70,7 @@ def health_check() -> HealthResponse:
 
 
 @app.post("/import", response_model=ImportResponse)
+# Import CSV data into the places table.
 def import_data(clear: bool = True) -> ImportResponse:
     try:
         with get_connection() as connection:
@@ -90,6 +89,7 @@ def import_data(clear: bool = True) -> ImportResponse:
 
 
 @app.get("/places", response_model=List[PlaceResponse])
+# Fetch all places or filter by category.
 def get_places(category: Optional[str] = None) -> List[PlaceResponse]:
     try:
         with get_connection() as connection:
@@ -100,6 +100,7 @@ def get_places(category: Optional[str] = None) -> List[PlaceResponse]:
 
 
 @app.get("/categories", response_model=CategoryListResponse)
+# Fetch distinct categories for filtering in the UI.
 def get_categories() -> CategoryListResponse:
     try:
         with get_connection() as connection:
@@ -110,6 +111,7 @@ def get_categories() -> CategoryListResponse:
 
 
 @app.get("/places/nearest", response_model=List[NearbyPlaceResponse])
+# Return k nearest places to a selected point.
 def get_nearest_places(
     lat: float,
     lon: float,
@@ -125,6 +127,7 @@ def get_nearest_places(
 
 
 @app.get("/places/radius", response_model=List[NearbyPlaceResponse])
+# Return places within a radius from a selected point.
 def get_places_in_radius(
     lat: float,
     lon: float,
@@ -140,6 +143,7 @@ def get_places_in_radius(
 
 
 @app.post("/places/in-polygon", response_model=List[PlaceResponse])
+# Return places that intersect with the provided polygon.
 def get_places_in_polygon(request: PolygonSearchRequest) -> List[PlaceResponse]:
     try:
         if len(request.coordinates) < 3:
@@ -154,44 +158,8 @@ def get_places_in_polygon(request: PolygonSearchRequest) -> List[PlaceResponse]:
         raise HTTPException(status_code=500, detail=f"Polygon search failed: {exc}") from exc
 
 
-@app.get("/benchmark/nearest", response_model=BenchmarkResponse)
-def benchmark_nearest(
-    lat: float,
-    lon: float,
-    k: int = Query(5, ge=1, le=50),
-    category: Optional[str] = None,
-) -> BenchmarkResponse:
-    try:
-        query, params, note = nearest_benchmark_payload(lat=lat, lon=lon, k=k, category=category)
-        with get_connection() as connection:
-            payload = benchmark_query(connection, query=query, params=params, query_type="nearest", note=note)
-        return BenchmarkResponse(**payload)
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"Nearest benchmark failed: {exc}") from exc
-
-
-@app.get("/benchmark/radius", response_model=BenchmarkResponse)
-def benchmark_radius(
-    lat: float,
-    lon: float,
-    radius_m: float = Query(..., gt=0),
-    category: Optional[str] = None,
-) -> BenchmarkResponse:
-    try:
-        query, params, note = radius_benchmark_payload(
-            lat=lat,
-            lon=lon,
-            radius_m=radius_m,
-            category=category,
-        )
-        with get_connection() as connection:
-            payload = benchmark_query(connection, query=query, params=params, query_type="radius", note=note)
-        return BenchmarkResponse(**payload)
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"Radius benchmark failed: {exc}") from exc
-
-
 @app.get("/explain/radius", response_model=ExplainResponse)
+# Run EXPLAIN ANALYZE for the radius query and return the plan text.
 def explain_radius_query(
     lat: float,
     lon: float,
